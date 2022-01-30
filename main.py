@@ -1,16 +1,49 @@
-# This is a sample Python script.
+import tcod
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from actions import EscapeAction, MovementAction
+from entity import Entity
+from input_handlers import EventHandler
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def main() -> None:
+    screen_width = 80
+    screen_height = 50
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    tileset = tcod.tileset.load_tilesheet(
+        "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
+    )
+
+    event_handler = EventHandler()
+
+    player = Entity(int(screen_width / 2), int(screen_height / 2), "@", (255, 255, 255))
+    npc = Entity(int(screen_width / 2 - 5), int(screen_height / 2 - 5), "@", (255, 255, 0))
+    entities = {npc, player}
+
+    with tcod.context.new_terminal(
+        screen_width,
+        screen_height,
+        tileset=tileset,
+        title="Yet Another Roguelike Tutorial",
+        vsync=True,
+    ) as context:
+        root_console = tcod.Console(screen_width, screen_height, order="F")
+        while True:
+            root_console.print(x=player.x, y=player.y, string="player.char", fg=player.color)
+            context.present(root_console)
+            root_console.clear()
+
+            for event in tcod.event.wait():
+                action = event_handler.dispatch(event)
+
+                if action is None:
+                    continue
+
+                if isinstance(action, MovementAction):
+                    player.move(dx=action.dx, dy=action.dy)
+
+                elif isinstance(action, EscapeAction):
+                    raise SystemExit()
+
+
+if __name__ == "__main__":
+    main()
